@@ -27,7 +27,7 @@ export default function Contact() {
           <div className="space-y-6">
             <InfoCard icon={MapPin} title="Head Office" lines={["House 13, Lekki Garden Estate Phase 1,", "off DKK Bus Stop, Sangotedo-Ajah,", "Eti-Osa, Lagos State. Nigeria."]} />
             <InfoCard icon={Phone} title="Hotline" lines={["+(234) 0903 663 0650", "02013309113"]} />
-            <InfoCard icon={Mail} title="Email" lines={["custormercare@rprogroup.net"]} />
+            <InfoCard icon={Mail} title="Email" lines={["Customercare@rprogroup.com.ng"]} />
           </div>
         </Reveal>
 

@@ -26,7 +26,7 @@ export function SiteHeader() {
           <Phone className="size-3" /> +(234) 0903 663 0650
         </a>
         <a href="tel:02013309113" className="hover:opacity-80">02013309113</a>
-        <span className="opacity-80">custormercare@rprogroup.net</span>
+        <span className="opacity-80">Customercare@rprogroup.com.ng</span>
       </div>
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
   <Link to="/" className="flex items-center gap-2 group">

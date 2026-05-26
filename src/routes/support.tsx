@@ -55,8 +55,8 @@ export default function Support() {
               <p className="text-white/75 leading-relaxed relative">
                 Building long-term partnerships with our clients is at the heart of what we do. Have a question? Our team is one message away.
               </p>
-              <a href="mailto:custormercare@rprogroup.net" className="mt-6 inline-flex items-center gap-2 text-white font-semibold relative">
-                <Mail className="size-4" /> custormercare@rprogroup.net
+              <a href="mailto:Customercare@rprogroup.com.ng" className="mt-6 inline-flex items-center gap-2 text-white font-semibold relative">
+                <Mail className="size-4" /> Customercare@rprogroup.com.ng
               </a>
             </div>
           </Reveal>

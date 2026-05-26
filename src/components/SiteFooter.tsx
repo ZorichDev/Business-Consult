@@ -47,7 +47,7 @@ export function SiteFooter() {
             </li>
             <li className="flex gap-2">
               <Mail className="size-4 mt-0.5 shrink-0 text-brand-red" />
-              custormercare@rprogroup.net
+              Customercare@rprogroup.com.ng
             </li>
           </ul>
         </div>
