@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { Phone, Menu, X } from "lucide-react";
 import { useState } from "react";
 import logo from "../assets/logo.png";
+import type { FlutterwaveConfig, FlutterwaveResponse } from "@/types/flutterwave";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -11,42 +12,6 @@ const nav = [
   { to: "/support", label: "Support" },
   { to: "/contact", label: "Contact" },
 ] as const;
-
-// Define proper types for Flutterwave
-declare global {
-  interface Window {
-    FlutterwaveCheckout: (config: FlutterwaveConfig) => void;
-  }
-}
-
-interface FlutterwaveConfig {
-  public_key: string;
-  tx_ref: string;
-  amount: number;
-  currency: string;
-  payment_options: string;
-  customer: {
-    email: string;
-    phone_number: string;
-    name: string;
-  };
-  customizations: {
-    title: string;
-    description: string;
-    logo: string;
-  };
-  meta?: {
-    [key: string]: string;
-  };
-  callback: (response: FlutterwaveResponse) => void;
-  onclose: () => void;
-}
-
-interface FlutterwaveResponse {
-  status: string;
-  transaction_id: string;
-  tx_ref: string;
-}
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -63,7 +28,6 @@ export function SiteHeader() {
 
   const loadFlutterwaveScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Check if FlutterwaveCheckout is already a function
       if (typeof window.FlutterwaveCheckout === "function") {
         resolve(true);
         return;
@@ -207,7 +171,7 @@ export function SiteHeader() {
             disabled={isProcessing}
             className="hidden md:inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-elegant hover:scale-105 transition-transform disabled:opacity-50"
           >
-            {isProcessing ? "Processing..." : "Book Appointment / Pay"}
+            {isProcessing ? "Processing..." : "PAY SMALL SMALL"}
           </button>
           <button onClick={() => setOpen(!open)} className="md:hidden p-2" aria-label="Menu">
             {open ? <X className="size-6" /> : <Menu className="size-6" />}
@@ -233,7 +197,7 @@ export function SiteHeader() {
                 disabled={isProcessing}
                 className="mt-2 inline-flex justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
               >
-                {isProcessing ? "Processing..." : "Book Appointment / Pay"}
+                {isProcessing ? "Processing..." : "PAY SMALL SMALL"}
               </button>
             </div>
           </motion.div>

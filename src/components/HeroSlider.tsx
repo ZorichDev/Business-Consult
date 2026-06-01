@@ -5,6 +5,7 @@ import { ArrowRight, Play, ChevronLeft, ChevronRight, Loader2 } from "lucide-rea
 import slide1 from "@/assets/slide-1.jpg";
 import slide2 from "@/assets/slide-2.jpg";
 import slide3 from "@/assets/slide-3.jpg";
+import type { FlutterwaveConfig, FlutterwaveResponse } from "@/types/flutterwave";
 
 const slides = [
   {
@@ -30,16 +31,16 @@ const slides = [
   },
 ];
 
-const loadFlutterwaveScript = () => {
+const loadFlutterwaveScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    // If the FlutterwaveCheckout function is already loaded, resolve immediately
-    if (typeof (window as any).FlutterwaveCheckout === "function") {
+    if (typeof window.FlutterwaveCheckout === "function") {
       resolve(true);
       return;
     }
     const script = document.createElement('script');
     script.src = 'https://checkout.flutterwave.com/v3.js';
     script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
 };
@@ -66,11 +67,16 @@ export function HeroSlider() {
     setIsProcessing(true);
     
     try {
-      await loadFlutterwaveScript();
+      const scriptLoaded = await loadFlutterwaveScript();
+      if (!scriptLoaded) {
+        alert("Unable to load payment system. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
       
       const tx_ref = `RPRO-HERO-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
       
-      const paymentConfig = {
+      const paymentConfig: FlutterwaveConfig = {
         public_key: "FLWPUBK_TEST-96c4b0b3e46e45ba8c9405b5c0f1350c-X",
         tx_ref: tx_ref,
         amount: bookingDetails.amount,
@@ -91,7 +97,7 @@ export function HeroSlider() {
           appointment_date: bookingDetails.appointmentDate,
           source: "hero_slider",
         },
-        callback: function(response: any) {
+        callback: (response: FlutterwaveResponse) => {
           if (response.status === "successful") {
             alert(`✓ Payment Successful!\n\nTransaction ID: ${response.transaction_id}\nAmount: ₦${bookingDetails.amount.toLocaleString()}\n\nWe'll contact you shortly at ${bookingDetails.email} to confirm your service.`);
             setShowBookingModal(false);
@@ -101,12 +107,12 @@ export function HeroSlider() {
           }
           setIsProcessing(false);
         },
-        onclose: function() {
+        onclose: () => {
           setIsProcessing(false);
         },
       };
       
-      (window as any).FlutterwaveCheckout(paymentConfig);
+      window.FlutterwaveCheckout(paymentConfig);
       
     } catch (error) {
       console.error("Payment error:", error);
@@ -186,7 +192,7 @@ export function HeroSlider() {
                     </>
                   ) : (
                     <>
-                     PAY SMALL SMALL <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+                      Pay small small <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>
@@ -255,14 +261,13 @@ export function HeroSlider() {
           onClick={() => setShowBookingModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 border border-white/10"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-white mb-2">PAY SMALL SMALL</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">Book a Service</h2>
               <p className="text-gray-300 text-sm">Fill in your details to get started</p>
             </div>
             
@@ -270,32 +275,32 @@ export function HeroSlider() {
               <input
                 type="text"
                 placeholder="Full Name *"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent text-white placeholder:text-gray-400 transition"
+                className="w-full px-4 py-2 bg-background-dark-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red text-white placeholder:text-gray-400"
                 value={bookingDetails.name}
                 onChange={(e) => setBookingDetails({...bookingDetails, name: e.target.value})}
               />
               <input
                 type="email"
                 placeholder="Email Address *"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent text-white placeholder:text-gray-400 transition"
+                className="w-full px-4 py-2 bg-background-dark-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red text-white placeholder:text-gray-400"
                 value={bookingDetails.email}
                 onChange={(e) => setBookingDetails({...bookingDetails, email: e.target.value})}
               />
               <input
                 type="tel"
                 placeholder="Phone Number *"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent text-white placeholder:text-gray-400 transition"
+                className="w-full px-4 py-2 bg-background-dark-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red text-white placeholder:text-gray-400"
                 value={bookingDetails.phone}
                 onChange={(e) => setBookingDetails({...bookingDetails, phone: e.target.value})}
               />
               <input
                 type="date"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent text-white transition"
+                className="w-full px-4 py-2 bg-background-dark-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red text-white"
                 value={bookingDetails.appointmentDate}
                 onChange={(e) => setBookingDetails({...bookingDetails, appointmentDate: e.target.value})}
               />
               <select
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent text-white transition cursor-pointer"
+                className="w-full px-4 py-2 bg-background-dark-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red text-white"
                 value={bookingDetails.appointmentType}
                 onChange={(e) => {
                   const amount = e.target.value === "consultation" ? 5000 : 
@@ -304,13 +309,13 @@ export function HeroSlider() {
                   setBookingDetails({...bookingDetails, appointmentType: e.target.value, amount});
                 }}
               >
-                <option value="consultation" className="bg-gray-800">Business Consultation - ₦5,000</option>
-                <option value="business-plan" className="bg-gray-800">Business Plan Writing - ₦25,000</option>
-                <option value="registration" className="bg-gray-800">Business Registration - ₦35,000</option>
-                <option value="strategy" className="bg-gray-800">Strategic Planning - ₦10,000</option>
+                <option value="consultation" className="bg-background-dark-100 text-white">Business Consultation - ₦5,000</option>
+                <option value="business-plan" className="bg-background-dark-100 text-white">Business Plan Writing - ₦25,000</option>
+                <option value="registration" className="bg-background-dark-100 text-white">Business Registration - ₦35,000</option>
+                <option value="strategy" className="bg-background-dark-100 text-white">Strategic Planning - ₦10,000</option>
               </select>
               
-              <div className="pt-6 border-t border-white/10 mt-4">
+              <div className="pt-4 border-t border-border">
                 <div className="flex justify-between items-center mb-4 text-white">
                   <span className="text-sm">Total Amount:</span>
                   <span className="text-2xl font-bold text-brand-red">
@@ -319,21 +324,21 @@ export function HeroSlider() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setShowBookingModal(false)}
-                  className="flex-1 px-4 py-3 border border-white/20 rounded-xl hover:bg-white/10 transition text-white font-medium"
+                  className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-white/10 transition text-white"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePayment}
                   disabled={!bookingDetails.name || !bookingDetails.email || !bookingDetails.phone || !bookingDetails.appointmentDate || isProcessing}
-                  className="flex-1 px-4 py-3 bg-brand-red rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-white font-semibold"
+                  className="flex-1 px-4 py-2 bg-brand-red rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-white font-semibold"
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 className="size-5 animate-spin" />
+                      <Loader2 className="size-4 animate-spin" />
                       Processing...
                     </>
                   ) : (
@@ -349,8 +354,4 @@ export function HeroSlider() {
   );
 }
 
-declare global {
-  interface Window {
-    FlutterwaveCheckout: (config: any) => void;
-  }
-}
+export default HeroSlider;
