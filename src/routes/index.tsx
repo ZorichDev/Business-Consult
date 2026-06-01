@@ -38,7 +38,7 @@ const stats = [
 
 // You'll need to create this component or replace with an img tag
 const WebinarAvatar = () => (
-  <div className="w-full h-full bg-gradient-to-br from-brand-red to-red-900" />
+  <div className="w-full h-full bg-linear-to-br from-brand-red to-red-900" />
 );
 
 export default function Home() {
@@ -168,7 +168,7 @@ export default function Home() {
                 href={w.zoom}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 animate-pulse-btn bg-[#6b0000] hover:bg-[#5a0000] hover:[animation:none] text-white font-bold text-sm md:text-base px-5 md:px-8 py-3 md:py-4 rounded transition-colors"
+                className="shrink-0 animate-pulse-btn bg-[#6b0000] hover:bg-[#5a0000] hover:animate-none text-white font-bold text-sm md:text-base px-5 md:px-8 py-3 md:py-4 rounded transition-colors"
                 style={{
                   animation: "webinarPulse 2s ease-in-out infinite",
                 }}
