@@ -1,0 +1,26 @@
+{
+  "name": "rpro-subscription-backend",
+  "version": "1.0.0",
+  "description": "Subscription payment backend for R-Pro Business Consult",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "cron": "node src/utils/cronJobs.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.5.0",
+    "crypto": "^1.0.1",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.5",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
