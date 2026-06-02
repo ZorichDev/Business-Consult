@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
@@ -6,11 +7,13 @@ import slide1 from "@/assets/slide-1.jpg";
 import slide2 from "@/assets/slide-2.jpg";
 import slide3 from "@/assets/slide-3.jpg";
 
-declare global {
-  interface Window {
-    FlutterwaveCheckout: (config: any) => void;
-  }
-}
+// FlutterwaveCheckout is declared globally in src/types/flutterwave.d.ts
+
+type FlutterwaveResponse = {
+  status?: string;
+  card_token?: string;
+  transaction_id?: string;
+};
 
 const slides = [
   {
@@ -36,35 +39,30 @@ const slides = [
   },
 ];
 
-// Plan prices
 const PLAN_PRICES = {
-  consultation: { id: 'consultation', name: 'Business Consultation', price: 50000 },
-  'business-plan': { id: 'business-plan', name: 'Business Plan Writing', price: 150000 },
-  registration: { id: 'registration', name: 'Business Registration', price: 350000 },
-  strategy: { id: 'strategy', name: 'Strategic Planning', price: 100000 },
+  consultation:    { id: "consultation",  name: "Business Consultation",  price: 50000  },
+  "business-plan": { id: "business-plan", name: "Business Plan Writing",   price: 150000 },
+  registration:    { id: "registration",  name: "Business Registration",   price: 350000 },
+  strategy:        { id: "strategy",      name: "Strategic Planning",      price: 100000 },
 };
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = "http://localhost:3000/api";
 
-const loadFlutterwaveScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window.FlutterwaveCheckout === "function") {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.flutterwave.com/v3.js';
+const loadFlutterwaveScript = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    if (typeof window.FlutterwaveCheckout === "function") { resolve(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://checkout.flutterwave.com/v3.js";
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
-};
 
 export function HeroSlider() {
   const [index, setIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [step, setStep] = useState<'details' | 'installment' | 'payment'>('details');
+  const [step, setStep] = useState<"details" | "installment" | "payment">("details");
 
   const [bookingDetails, setBookingDetails] = useState({
     name: "",
@@ -79,7 +77,7 @@ export function HeroSlider() {
     numberOfInstallments: 1,
     amountPerInstallment: 50000,
     paymentDay: 1,
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: new Date().toISOString().split("T")[0],
   });
 
   useEffect(() => {
@@ -87,32 +85,26 @@ export function HeroSlider() {
     return () => clearInterval(id);
   }, []);
 
-  // Update total amount when plan changes
   useEffect(() => {
     const plan = PLAN_PRICES[bookingDetails.appointmentType as keyof typeof PLAN_PRICES];
     if (plan) {
-      const newTotalAmount = plan.price;
-      const newAmountPerInstallment = Math.ceil(newTotalAmount / installmentPlan.numberOfInstallments);
-      setInstallmentPlan(prev => ({
+      setInstallmentPlan((prev) => ({
         ...prev,
-        totalAmount: newTotalAmount,
-        amountPerInstallment: newAmountPerInstallment,
+        totalAmount: plan.price,
+        amountPerInstallment: Math.ceil(plan.price / prev.numberOfInstallments),
       }));
     }
   }, [bookingDetails.appointmentType]);
 
-  // Update amount per installment when number of installments changes
   useEffect(() => {
-    const newAmountPerInstallment = Math.ceil(installmentPlan.totalAmount / installmentPlan.numberOfInstallments);
-    setInstallmentPlan(prev => ({
+    setInstallmentPlan((prev) => ({
       ...prev,
-      amountPerInstallment: newAmountPerInstallment,
+      amountPerInstallment: Math.ceil(prev.totalAmount / prev.numberOfInstallments),
     }));
   }, [installmentPlan.numberOfInstallments, installmentPlan.totalAmount]);
 
   const handlePayment = async () => {
     setIsProcessing(true);
-
     try {
       const scriptLoaded = await loadFlutterwaveScript();
       if (!scriptLoaded) {
@@ -125,9 +117,9 @@ export function HeroSlider() {
       const tx_ref = `RPRO-INSTALL-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
       const firstPaymentAmount = installmentPlan.amountPerInstallment;
 
-      const paymentConfig: any = {
+      const paymentConfig = {
         public_key: "FLWPUBK_TEST-96c4b0b3e46e45ba8c9405b5c0f1350c-X",
-        tx_ref: tx_ref,
+        tx_ref,
         amount: firstPaymentAmount,
         currency: "NGN",
         payment_options: "card",
@@ -152,50 +144,51 @@ export function HeroSlider() {
           source: "hero_slider",
         },
         tokenization: true,
-        callback: async (response: any) => {
-          if (response.status === "successful" && response.card_token) {
-            const subscriptionData = {
-              customerName: bookingDetails.name,
-              customerEmail: bookingDetails.email,
-              customerPhone: bookingDetails.phone,
-              planId: bookingDetails.appointmentType,
-              planName: plan.name,
-              totalAmount: installmentPlan.totalAmount,
-              numberOfInstallments: installmentPlan.numberOfInstallments,
-              amountPerInstallment: installmentPlan.amountPerInstallment,
-              paymentDay: installmentPlan.paymentDay,
-              startDate: installmentPlan.startDate,
-              cardToken: response.card_token,
-              firstPaymentTransactionId: response.transaction_id,
-            };
+        callback: (response: any) => {
+          void (async () => {
+            if (response.status === "successful" && response.card_token) {
+              const subscriptionData = {
+                customerName: bookingDetails.name,
+                customerEmail: bookingDetails.email,
+                customerPhone: bookingDetails.phone,
+                planId: bookingDetails.appointmentType,
+                planName: plan.name,
+                totalAmount: installmentPlan.totalAmount,
+                numberOfInstallments: installmentPlan.numberOfInstallments,
+                amountPerInstallment: installmentPlan.amountPerInstallment,
+                paymentDay: installmentPlan.paymentDay,
+                startDate: installmentPlan.startDate,
+                cardToken: response.card_token,
+                firstPaymentTransactionId: response.transaction_id,
+              };
 
-            const apiResponse = await fetch(`${API_URL}/subscriptions/create-installment`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(subscriptionData),
-            });
+              const apiResponse = await fetch(`${API_URL}/subscriptions/create-installment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(subscriptionData),
+              });
 
-            const result = await apiResponse.json();
+              const result = await apiResponse.json();
 
-            if (result.status === 'success') {
-              alert(`✓ Installment Plan Activated!\n\nPlan: ${plan.name}\nTotal Amount: ₦${installmentPlan.totalAmount.toLocaleString()}\nNumber of Installments: ${installmentPlan.numberOfInstallments}\nAmount per Installment: ₦${installmentPlan.amountPerInstallment.toLocaleString()}\nPayment Day: Day ${installmentPlan.paymentDay} of each month\n\nFirst payment of ₦${firstPaymentAmount.toLocaleString()} has been charged.\nRemaining ${installmentPlan.numberOfInstallments - 1} payments will be automatically charged on day ${installmentPlan.paymentDay} of each month.\n\nWe'll send you a receipt each month.`);
-              setShowBookingModal(false);
-              resetForm();
+              if (result.status === "success") {
+                alert(
+                  `✓ Installment Plan Activated!\n\nPlan: ${plan.name}\nTotal Amount: ₦${installmentPlan.totalAmount.toLocaleString()}\nNumber of Installments: ${installmentPlan.numberOfInstallments}\nAmount per Installment: ₦${installmentPlan.amountPerInstallment.toLocaleString()}\nPayment Day: Day ${installmentPlan.paymentDay} of each month\n\nFirst payment of ₦${firstPaymentAmount.toLocaleString()} has been charged.\nRemaining ${installmentPlan.numberOfInstallments - 1} payments will be automatically charged on day ${installmentPlan.paymentDay} of each month.\n\nWe'll send you a receipt each month.`
+                );
+                setShowBookingModal(false);
+                resetForm();
+              } else {
+                alert("Payment successful but failed to save installment plan. Please contact support.");
+              }
             } else {
-              alert("Payment successful but failed to save installment plan. Please contact support.");
+              alert("Payment was not successful. Please try again.");
             }
-          } else {
-            alert("Payment was not successful. Please try again.");
-          }
-          setIsProcessing(false);
+            setIsProcessing(false);
+          })();
         },
-        onclose: () => {
-          setIsProcessing(false);
-        },
+        onclose: () => setIsProcessing(false),
       };
 
       window.FlutterwaveCheckout(paymentConfig);
-
     } catch (error) {
       console.error("Payment error:", error);
       alert("Unable to initialize payment. Please try again later.");
@@ -204,20 +197,14 @@ export function HeroSlider() {
   };
 
   const resetForm = () => {
-    setStep('details');
-    setBookingDetails({
-      name: "",
-      email: "",
-      phone: "",
-      appointmentDate: "",
-      appointmentType: "consultation",
-    });
+    setStep("details");
+    setBookingDetails({ name: "", email: "", phone: "", appointmentDate: "", appointmentType: "consultation" });
     setInstallmentPlan({
       totalAmount: 50000,
       numberOfInstallments: 1,
       amountPerInstallment: 50000,
       paymentDay: 1,
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: new Date().toISOString().split("T")[0],
     });
   };
 
@@ -226,11 +213,11 @@ export function HeroSlider() {
       alert("Please fill in all required fields");
       return;
     }
-    setStep('installment');
+    setStep("installment");
   };
 
   const handleCreateInstallment = () => {
-    setStep('payment');
+    setStep("payment");
     handlePayment();
   };
 
@@ -354,12 +341,12 @@ export function HeroSlider() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm overflow-y-auto py-8"
-          onClick={() => setShowBookingModal(false)}
+          onClick={() => { setShowBookingModal(false); resetForm(); }}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
+            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-6 border-b border-gray-700">
@@ -367,13 +354,13 @@ export function HeroSlider() {
                 <h2 className="text-2xl font-bold text-white">PAY SMALL SMALL</h2>
                 <p className="text-gray-300 text-sm mt-1">Create your custom installment plan</p>
               </div>
-              <button onClick={() => setShowBookingModal(false)} className="text-gray-400 hover:text-white">
+              <button onClick={() => { setShowBookingModal(false); resetForm(); }} className="text-gray-400 hover:text-white">
                 <X className="size-6" />
               </button>
             </div>
 
             <div className="p-6">
-              {step === 'details' && (
+              {step === "details" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Your Details</h3>
                   <input
@@ -381,39 +368,38 @@ export function HeroSlider() {
                     placeholder="Full Name *"
                     className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
                     value={bookingDetails.name}
-                    onChange={(e) => setBookingDetails({...bookingDetails, name: e.target.value})}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, name: e.target.value })}
                   />
                   <input
                     type="email"
                     placeholder="Email Address *"
                     className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
                     value={bookingDetails.email}
-                    onChange={(e) => setBookingDetails({...bookingDetails, email: e.target.value})}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, email: e.target.value })}
                   />
                   <input
                     type="tel"
                     placeholder="Phone Number *"
                     className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
                     value={bookingDetails.phone}
-                    onChange={(e) => setBookingDetails({...bookingDetails, phone: e.target.value})}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, phone: e.target.value })}
                   />
                   <input
                     type="date"
                     className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
                     value={bookingDetails.appointmentDate}
-                    onChange={(e) => setBookingDetails({...bookingDetails, appointmentDate: e.target.value})}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentDate: e.target.value })}
                   />
                   <select
                     className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
                     value={bookingDetails.appointmentType}
-                    onChange={(e) => setBookingDetails({...bookingDetails, appointmentType: e.target.value})}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentType: e.target.value })}
                   >
                     <option value="consultation">Business Consultation - ₦{PLAN_PRICES.consultation.price.toLocaleString()}</option>
-                    <option value="business-plan">Business Plan Writing - ₦{PLAN_PRICES['business-plan'].price.toLocaleString()}</option>
+                    <option value="business-plan">Business Plan Writing - ₦{PLAN_PRICES["business-plan"].price.toLocaleString()}</option>
                     <option value="registration">Business Registration - ₦{PLAN_PRICES.registration.price.toLocaleString()}</option>
                     <option value="strategy">Strategic Planning - ₦{PLAN_PRICES.strategy.price.toLocaleString()}</option>
                   </select>
-
                   <button
                     onClick={handleNextToInstallment}
                     className="w-full mt-4 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold"
@@ -423,7 +409,7 @@ export function HeroSlider() {
                 </div>
               )}
 
-              {step === 'installment' && (
+              {step === "installment" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Customize Your Installment Plan</h3>
 
@@ -439,7 +425,7 @@ export function HeroSlider() {
                       min="1"
                       max="12"
                       value={installmentPlan.numberOfInstallments}
-                      onChange={(e) => setInstallmentPlan({...installmentPlan, numberOfInstallments: parseInt(e.target.value)})}
+                      onChange={(e) => setInstallmentPlan({ ...installmentPlan, numberOfInstallments: parseInt(e.target.value) })}
                       className="w-full"
                     />
                     <div className="flex justify-between text-sm text-gray-400 mt-1">
@@ -460,7 +446,7 @@ export function HeroSlider() {
                     <select
                       className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
                       value={installmentPlan.paymentDay}
-                      onChange={(e) => setInstallmentPlan({...installmentPlan, paymentDay: parseInt(e.target.value)})}
+                      onChange={(e) => setInstallmentPlan({ ...installmentPlan, paymentDay: parseInt(e.target.value) })}
                     >
                       {[...Array(28)].map((_, i) => (
                         <option key={i + 1} value={i + 1}>Day {i + 1} of each month</option>
@@ -474,7 +460,7 @@ export function HeroSlider() {
                       type="date"
                       className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
                       value={installmentPlan.startDate}
-                      onChange={(e) => setInstallmentPlan({...installmentPlan, startDate: e.target.value})}
+                      onChange={(e) => setInstallmentPlan({ ...installmentPlan, startDate: e.target.value })}
                     />
                   </div>
 
@@ -492,16 +478,21 @@ export function HeroSlider() {
 
                   <div className="flex gap-3 mt-6">
                     <button
-                      onClick={() => setStep('details')}
+                      onClick={() => setStep("details")}
                       className="flex-1 px-6 py-3 border border-border rounded-lg hover:bg-white/10 text-white"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleCreateInstallment}
-                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold"
+                      disabled={isProcessing}
+                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      Pay ₦{installmentPlan.amountPerInstallment.toLocaleString()} (First Installment)
+                      {isProcessing ? (
+                        <><Loader2 className="size-4 animate-spin" /> Processing...</>
+                      ) : (
+                        `Pay ₦${installmentPlan.amountPerInstallment.toLocaleString()} (First Installment)`
+                      )}
                     </button>
                   </div>
                 </div>

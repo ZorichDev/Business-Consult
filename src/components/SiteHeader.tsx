@@ -4,12 +4,6 @@ import { Phone, Menu, X, ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
 
-declare global {
-  interface Window {
-    FlutterwaveCheckout: (config: any) => void;
-  }
-}
-
 const nav = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About Us" },
@@ -198,7 +192,7 @@ export function SiteHeader() {
         transition={{ duration: 0.5 }}
         className="sticky top-0 z-50 backdrop-blur-xl bg-background/75 border-b border-border"
       >
-        <div className="hidden md:flex items-center justify-end gap-6 px-6 py-2 text-xs text-muted-foreground bg-brand-red text-primary-foreground">
+        <div className="hidden md:flex items-center justify-end gap-6 px-6 py-2 text-xs bg-brand-red text-primary-foreground">
           <a href="tel:+2349036630650" className="flex items-center gap-1.5 hover:opacity-80">
             <Phone className="size-3" /> +(234) 0903 663 0650
           </a>
@@ -290,7 +284,7 @@ export function SiteHeader() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
+            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

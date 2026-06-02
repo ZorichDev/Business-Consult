@@ -1,31 +1,34 @@
-// src/types/flutterwave.ts
-export interface FlutterwaveConfig {
+// Shared global type for the Flutterwave inline checkout script.
+// Centralised here so HeroSlider.tsx and SiteHeader.tsx don't each
+// re-declare Window and clash with one another (TS2717).
+
+interface FlutterwaveConfig {
   public_key: string;
   tx_ref: string;
   amount: number;
   currency: string;
-  payment_options: string;
+  payment_options?: string;
   customer: {
     email: string;
-    phone_number: string;
+    phone_number?: string;
     name: string;
   };
-  customizations: {
-    title: string;
-    description: string;
-    logo: string;
+  customizations?: {
+    title?: string;
+    description?: string;
+    logo?: string;
   };
-  meta?: {
-    [key: string]: string;
-  };
+  meta?: Record<string, unknown>;
+  tokenization?: boolean;
   callback: (response: FlutterwaveResponse) => void;
   onclose: () => void;
 }
 
-export interface FlutterwaveResponse {
+interface FlutterwaveResponse {
   status: string;
-  transaction_id: string;
-  tx_ref: string;
+  transaction_id?: string | number;
+  card_token?: string;
+  [key: string]: unknown;
 }
 
 declare global {
@@ -33,3 +36,5 @@ declare global {
     FlutterwaveCheckout: (config: FlutterwaveConfig) => void;
   }
 }
+
+export {};
