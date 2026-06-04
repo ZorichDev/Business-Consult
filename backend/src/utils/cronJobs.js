@@ -1,3 +1,4 @@
+const Subscription = require('../models/Subscription'); // ADD THIS LINE
 const cron = require('node-cron');
 const subscriptionService = require('../services/subscriptionService');
 const nodemailer = require('nodemailer');

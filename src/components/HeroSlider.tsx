@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
@@ -6,8 +5,6 @@ import { ArrowRight, Play, ChevronLeft, ChevronRight, Loader2, CreditCard, X } f
 import slide1 from "@/assets/slide-1.jpg";
 import slide2 from "@/assets/slide-2.jpg";
 import slide3 from "@/assets/slide-3.jpg";
-
-// FlutterwaveCheckout is declared globally in src/types/flutterwave.d.ts
 
 type FlutterwaveResponse = {
   status?: string;
@@ -47,6 +44,12 @@ const PLAN_PRICES = {
 };
 
 const API_URL = "http://localhost:3000/api";
+
+const INPUT_CLASS =
+  "w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-brand-red transition-colors";
+
+const SELECT_CLASS =
+  "w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-brand-red transition-colors appearance-none cursor-pointer";
 
 const loadFlutterwaveScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -130,7 +133,7 @@ export function HeroSlider() {
         },
         customizations: {
           title: "R-Pro Business Consult - Pay Small Small",
-          description: `${plan.name} - Installment ${installmentPlan.numberOfInstallments} months`,
+          description: `${plan.name} - ${installmentPlan.numberOfInstallments} months installment`,
           logo: "https://your-logo-url.com/logo.png",
         },
         meta: {
@@ -146,6 +149,13 @@ export function HeroSlider() {
         tokenization: true,
         callback: (response: any) => {
           void (async () => {
+            // Block if no card token — transfer payment detected
+            if (!response.card_token) {
+              alert("❌ Installment plans require card payment only.\n\nPlease try again and select 'Card' as your payment method so we can save your card for automatic monthly payments.");
+              setIsProcessing(false);
+              return;
+            }
+
             if (response.status === "successful" && response.card_token) {
               const subscriptionData = {
                 customerName: bookingDetails.name,
@@ -346,75 +356,96 @@ export function HeroSlider() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-700">
               <div>
                 <h2 className="text-2xl font-bold text-white">PAY SMALL SMALL</h2>
-                <p className="text-gray-300 text-sm mt-1">Create your custom installment plan</p>
+                <p className="text-gray-400 text-sm mt-1">Create your custom installment plan</p>
               </div>
-              <button onClick={() => { setShowBookingModal(false); resetForm(); }} className="text-gray-400 hover:text-white">
+              <button
+                onClick={() => { setShowBookingModal(false); resetForm(); }}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
                 <X className="size-6" />
               </button>
             </div>
 
             <div className="p-6">
+              {/* STEP 1 — Details */}
               {step === "details" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Your Details</h3>
                   <input
                     type="text"
                     placeholder="Full Name *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
+                    className={INPUT_CLASS}
                     value={bookingDetails.name}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, name: e.target.value })}
                   />
                   <input
                     type="email"
                     placeholder="Email Address *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
+                    className={INPUT_CLASS}
                     value={bookingDetails.email}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, email: e.target.value })}
                   />
                   <input
                     type="tel"
                     placeholder="Phone Number *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400"
+                    className={INPUT_CLASS}
                     value={bookingDetails.phone}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, phone: e.target.value })}
                   />
                   <input
                     type="date"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
+                    className={INPUT_CLASS}
                     value={bookingDetails.appointmentDate}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentDate: e.target.value })}
                   />
-                  <select
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
-                    value={bookingDetails.appointmentType}
-                    onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentType: e.target.value })}
-                  >
-                    <option value="consultation">Business Consultation - ₦{PLAN_PRICES.consultation.price.toLocaleString()}</option>
-                    <option value="business-plan">Business Plan Writing - ₦{PLAN_PRICES["business-plan"].price.toLocaleString()}</option>
-                    <option value="registration">Business Registration - ₦{PLAN_PRICES.registration.price.toLocaleString()}</option>
-                    <option value="strategy">Strategic Planning - ₦{PLAN_PRICES.strategy.price.toLocaleString()}</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={SELECT_CLASS}
+                      value={bookingDetails.appointmentType}
+                      onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentType: e.target.value })}
+                    >
+                      <option value="consultation">Business Consultation — ₦{PLAN_PRICES.consultation.price.toLocaleString()}</option>
+                      <option value="business-plan">Business Plan Writing — ₦{PLAN_PRICES["business-plan"].price.toLocaleString()}</option>
+                      <option value="registration">Business Registration — ₦{PLAN_PRICES.registration.price.toLocaleString()}</option>
+                      <option value="strategy">Strategic Planning — ₦{PLAN_PRICES.strategy.price.toLocaleString()}</option>
+                    </select>
+                    {/* custom dropdown arrow */}
+                    <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                      ▾
+                    </div>
+                  </div>
+
+                  {/* Card only notice */}
+                  <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                    <CreditCard className="size-4 text-yellow-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-yellow-300">
+                      Card payment only — your card will be saved for automatic monthly deductions. Bank transfer is not supported for installment plans.
+                    </p>
+                  </div>
+
                   <button
                     onClick={handleNextToInstallment}
-                    className="w-full mt-4 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold"
+                    className="w-full mt-2 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold transition-opacity"
                   >
                     Continue to Installment Plan
                   </button>
                 </div>
               )}
 
+              {/* STEP 2 — Installment */}
               {step === "installment" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Customize Your Installment Plan</h3>
 
-                  <div className="bg-brand-red/10 rounded-lg p-4 border border-brand-red/20 mb-4">
-                    <p className="text-gray-300 text-sm">Total Plan Amount</p>
+                  <div className="bg-brand-red/10 rounded-lg p-4 border border-brand-red/20">
+                    <p className="text-gray-400 text-sm">Total Plan Amount</p>
                     <p className="text-3xl font-bold text-brand-red">₦{installmentPlan.totalAmount.toLocaleString()}</p>
                   </div>
 
@@ -426,7 +457,7 @@ export function HeroSlider() {
                       max="12"
                       value={installmentPlan.numberOfInstallments}
                       onChange={(e) => setInstallmentPlan({ ...installmentPlan, numberOfInstallments: parseInt(e.target.value) })}
-                      className="w-full"
+                      className="w-full accent-brand-red"
                     />
                     <div className="flex justify-between text-sm text-gray-400 mt-1">
                       <span>1 month</span>
@@ -435,38 +466,43 @@ export function HeroSlider() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <p className="text-gray-300 text-sm">Amount per Installment</p>
+                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <p className="text-gray-400 text-sm">Amount per Installment</p>
                     <p className="text-2xl font-bold text-white">₦{installmentPlan.amountPerInstallment.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400 mt-1">× {installmentPlan.numberOfInstallments} installments</p>
+                    <p className="text-xs text-gray-500 mt-1">× {installmentPlan.numberOfInstallments} installments</p>
                   </div>
 
                   <div>
                     <label className="text-sm text-gray-300 block mb-2">Preferred Payment Day of Month</label>
-                    <select
-                      className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
-                      value={installmentPlan.paymentDay}
-                      onChange={(e) => setInstallmentPlan({ ...installmentPlan, paymentDay: parseInt(e.target.value) })}
-                    >
-                      {[...Array(28)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>Day {i + 1} of each month</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        className={SELECT_CLASS}
+                        value={installmentPlan.paymentDay}
+                        onChange={(e) => setInstallmentPlan({ ...installmentPlan, paymentDay: parseInt(e.target.value) })}
+                      >
+                        {[...Array(28)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>Day {i + 1} of each month</option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                        ▾
+                      </div>
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-sm text-gray-300 block mb-2">Start Date (First Payment)</label>
                     <input
                       type="date"
-                      className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white"
+                      className={INPUT_CLASS}
                       value={installmentPlan.startDate}
                       onChange={(e) => setInstallmentPlan({ ...installmentPlan, startDate: e.target.value })}
                     />
                   </div>
 
-                  <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20 mt-4">
+                  <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
                     <p className="text-sm text-blue-300 flex items-center gap-2">
-                      <CreditCard className="size-4" />
+                      <CreditCard className="size-4 shrink-0" />
                       Your card will be saved for automatic monthly payments
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
@@ -479,14 +515,14 @@ export function HeroSlider() {
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={() => setStep("details")}
-                      className="flex-1 px-6 py-3 border border-border rounded-lg hover:bg-white/10 text-white"
+                      className="flex-1 px-6 py-3 border border-gray-600 rounded-lg hover:bg-white/10 text-white transition-colors"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleCreateInstallment}
                       disabled={isProcessing}
-                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-opacity"
                     >
                       {isProcessing ? (
                         <><Loader2 className="size-4 animate-spin" /> Processing...</>
@@ -501,6 +537,14 @@ export function HeroSlider() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Fix select option background globally */}
+      <style>{`
+        select option {
+          background-color: #111827;
+          color: #ffffff;
+        }
+      `}</style>
     </>
   );
 }

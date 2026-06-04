@@ -23,23 +23,32 @@ const services = [
 ];
 
 const webinars = [
-  { day: "Monday", title: "R-Pro Travels and Tours", time: "2:00 PM – 2:30 PM (GMT)", zoom: "https://zoom.us/join1", image: webinarImage },
-  { day: "Tuesday", title: "R-Pro Business Consult", time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://zoom.us/join2", image: webinarImage },
-  { day: "Wednesday", title: "R-Pro Abroad Consult", time: "2:00 PM – 2:30 PM (GMT)", zoom: "https://zoom.us/join3", image: webinarImage },
-  { day: "Thursday", title: "Retail / Sales", time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://zoom.us/join4", image: webinarImage },
-  { day: "Friday", title: "IT", time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://zoom.us/join5", image: webinarImage },
+  { day: "Monday",    title: "R-Pro Travels and Tours",  time: "2:00 PM – 2:30 PM (GMT)", zoom: "https://webinar.rprogroup.ng/", image: webinarImage },
+  { day: "Tuesday",   title: "R-Pro Business Consult",   time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://webinar.rprogroup.ng/", image: webinarImage },
+  { day: "Wednesday", title: "R-Pro Abroad Consult",     time: "2:00 PM – 2:30 PM (GMT)", zoom: "https://webinar.rprogroup.ng/", image: webinarImage },
+  { day: "Thursday",  title: "Retail / Sales",           time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://webinar.rprogroup.ng/", image: webinarImage },
+  { day: "Friday",    title: "IT",                       time: "1:00 PM – 1:30 PM (GMT)", zoom: "https://webinar.rprogroup.ng/", image: webinarImage },
 ];
+
+function getNextOccurrence(dayName: string): string {
+  const dayIndex: Record<string, number> = {
+    Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3,
+    Thursday: 4, Friday: 5, Saturday: 6,
+  };
+  const todayIdx = new Date().getDay();
+  const target = dayIndex[dayName];
+  let diff = target - todayIdx;
+  if (diff <= 0) diff += 7;
+  const d = new Date();
+  d.setDate(d.getDate() + diff);
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
 
 const stats = [
   { value: "130+", label: "Businesses Registered" },
   { value: "500+", label: "Clients Attended To" },
   { value: "600+", label: "Requests Processed" },
 ];
-
-// You'll need to create this component or replace with an img tag
-const WebinarAvatar = () => (
-  <div className="w-full h-full bg-linear-to-br from-brand-red to-red-900" />
-);
 
 export default function Home() {
   return (
@@ -132,68 +141,157 @@ export default function Home() {
         </div>
       </section>
 
-     {/* WEBINARS */}
-<section className="relative py-20 md:py-28 overflow-hidden" style={{ backgroundColor: "#8B0000" }}>
-  <div className="relative mx-auto max-w-6xl px-6">
-    <Reveal>
-      <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-3">Upcoming Webinars</h2>
-      <p className="text-white/70 mb-12">Stay updated with our webinar schedule and join us at the designated times.</p>
-    </Reveal>
-    <div className="flex flex-col">
-      {webinars.map((w, i) => (
-        <Reveal key={w.day} delay={i * 0.06}>
-          <>
-            <motion.div
-              whileHover={{ x: 4 }}
-              className="flex items-center gap-4 md:gap-8 py-5"
-            >
-              <div className="shrink-0 size-16 md:size-20 rounded-full bg-[#1a1a2e] border-2 border-white/20 overflow-hidden">
-                <img 
-                  src={w.image} 
-                  alt={w.day}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-28 md:w-36 shrink-0">
-                <span className="font-display text-2xl md:text-3xl font-bold text-white">{w.day}</span>
-              </div>
-              <div className="hidden sm:block w-px h-10 bg-white/40 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm md:text-base">
-                  <span className="font-bold">{w.title}:</span>{" "}
-                  <span className="text-white/80">{w.time}</span>
-                </p>
-              </div>
-              <a
-                href={w.zoom}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 animate-pulse-btn bg-[#6b0000] hover:bg-[#5a0000] hover:animate-none text-white font-bold text-sm md:text-base px-5 md:px-8 py-3 md:py-4 rounded transition-colors"
-                style={{
-                  animation: "webinarPulse 2s ease-in-out infinite",
-                }}
-                onMouseEnter={e => e.currentTarget.style.animation = "none"}
-                onMouseLeave={e => e.currentTarget.style.animation = "webinarPulse 2s ease-in-out infinite"}
-              >
-                Join Webinar
-              </a>
-            </motion.div>
-            {i < webinars.length - 1 && <div className="h-px bg-white/20" />}
-          </>
-        </Reveal>
-      ))}
-      <div className="h-px bg-white/20" />
-    </div>
-  </div>
+      {/* WEBINARS */}
+      <section
+        className="relative py-16 md:py-28 overflow-hidden"
+        style={{ backgroundColor: "#8B0000" }}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none opacity-5"
+          style={{
+            backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`,
+            backgroundSize: "28px 28px",
+          }}
+        />
 
-  <style>{`
-    @keyframes webinarPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.25); }
-      50% { transform: scale(1.07); box-shadow: 0 0 0 10px rgba(255,255,255,0); }
-    }
-  `}</style>
-</section>
+        <div className="relative mx-auto max-w-6xl px-5 md:px-6">
+          <Reveal>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-2">
+              Upcoming Webinars
+            </h2>
+            <p className="text-white/60 text-sm md:text-base mb-10">
+              Stay updated with our webinar schedule and join us at the designated times.
+            </p>
+          </Reveal>
 
+          <div className="flex flex-col divide-y divide-white/10">
+            {webinars.map((w, i) => {
+              const dayMap: Record<string, number> = {
+                Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3,
+                Thursday: 4, Friday: 5, Saturday: 6,
+              };
+              const isToday = dayMap[w.day] === new Date().getDay();
+              const nextDate = isToday ? null : getNextOccurrence(w.day);
+
+              return (
+                <Reveal key={w.day} delay={i * 0.06}>
+                  <motion.div
+                    whileHover={{ x: 3 }}
+                    className="flex items-center gap-3 md:gap-6 py-4 md:py-5"
+                  >
+                    {/* IMAGE CIRCLE */}
+                    <div className="relative shrink-0">
+                      <div
+                        className={`size-14 md:size-[72px] rounded-full overflow-hidden border-2 ${
+                          isToday ? "border-white/80" : "border-white/25"
+                        }`}
+                      >
+                        <img
+                          src={w.image}
+                          alt={w.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {isToday && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-[#8B0000]"
+                          style={{ background: "#4ade80" }}
+                        />
+                      )}
+                    </div>
+
+                    {/* DAY LABEL (desktop) */}
+                    <div className="hidden sm:flex flex-col shrink-0 w-28 md:w-36">
+                      <span className="font-display text-xl md:text-2xl font-bold text-white leading-tight">
+                        {w.day}
+                      </span>
+                      {isToday && (
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-widest mt-0.5 px-1.5 py-0.5 rounded w-fit"
+                          style={{ background: "#4ade8022", color: "#4ade80" }}
+                        >
+                          Live Today
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="hidden sm:block w-px h-8 bg-white/20 shrink-0" />
+
+                    {/* TITLE + TIME */}
+                    <div className="flex-1 min-w-0">
+                      <div className="sm:hidden flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wide">
+                          {w.day}
+                        </span>
+                        {isToday && (
+                          <span
+                            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            style={{ background: "#4ade8022", color: "#4ade80" }}
+                          >
+                            Live
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-white font-bold text-sm md:text-base leading-snug truncate">
+                        {w.title}
+                      </p>
+                      <p className="text-white/55 text-xs md:text-sm mt-0.5">{w.time}</p>
+                    </div>
+
+                    {/* CTA */}
+                    {isToday ? (
+                      <a
+                        href={w.zoom}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 flex items-center gap-1.5 text-white font-bold text-xs md:text-sm px-4 md:px-7 py-2.5 md:py-3.5 rounded-full transition-colors"
+                        style={{
+                          background: "#6b0000",
+                          animation: "webinarPulse 2s ease-in-out infinite",
+                        }}
+                        onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.animation = "none")}
+                        onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) =>
+                          (e.currentTarget.style.animation =
+                            "webinarPulse 2s ease-in-out infinite")
+                        }
+                      >
+                        <span
+                          className="size-1.5 rounded-full bg-green-400 shrink-0"
+                          style={{ boxShadow: "0 0 4px #4ade80" }}
+                        />
+                        Join
+                      </a>
+                    ) : (
+                      <div
+                        className="shrink-0 flex flex-col items-center text-center px-3 md:px-4 py-2 md:py-2.5 rounded-full"
+                        style={{
+                          background: "rgba(255,255,255,0.07)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                        }}
+                        title={`Available on ${w.day}s — next: ${nextDate}`}
+                      >
+                        <span className="text-white/35 text-[9px] uppercase tracking-widest font-semibold">
+                          Next
+                        </span>
+                        <span className="text-white/55 text-[11px] md:text-xs font-bold leading-tight mt-0.5">
+                          {nextDate}
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes webinarPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+            50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+          }
+        `}</style>
+      </section>
 
       {/* SURVEY CTA */}
       <section className="mx-auto max-w-7xl px-6 py-20">

@@ -8,27 +8,46 @@ exports.createSubscription = async (req, res) => {
       customerPhone,
       planId,
       planName,
-      amount,
+      totalAmount,
+      numberOfInstallments,
+      amountPerInstallment,
+      paymentDay,
+      startDate,
       cardToken,
+      firstPaymentTransactionId,
     } = req.body;
-    
-    if (!customerName || !customerEmail || !customerPhone || !planId || !amount || !cardToken) {
+
+    // Validate required fields
+    if (!customerName || !customerEmail || !customerPhone || !planId || !cardToken) {
       return res.status(400).json({
         status: 'error',
         message: 'Missing required fields',
       });
     }
-    
+
+    // Block transfer payments — card token required for auto-debit
+    if (!cardToken) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Card payment required for installment plans. Bank transfer is not supported.',
+      });
+    }
+
     const result = await subscriptionService.createSubscription({
       customerName,
       customerEmail,
       customerPhone,
       planId,
       planName,
-      amount,
+      totalAmount,
+      numberOfInstallments,
+      amountPerInstallment,
+      paymentDay,
+      startDate,
       cardToken,
+      firstPaymentTransactionId,
     });
-    
+
     res.json({
       status: 'success',
       data: result,
@@ -45,9 +64,9 @@ exports.createSubscription = async (req, res) => {
 exports.cancelSubscription = async (req, res) => {
   try {
     const { subscriptionId, customerEmail } = req.body;
-    
+
     const result = await subscriptionService.cancelSubscription(subscriptionId, customerEmail);
-    
+
     res.json({
       status: 'success',
       data: result,
@@ -64,16 +83,16 @@ exports.cancelSubscription = async (req, res) => {
 exports.getSubscriptionStatus = async (req, res) => {
   try {
     const { email } = req.query;
-    
+
     if (!email) {
       return res.status(400).json({
         status: 'error',
         message: 'Email is required',
       });
     }
-    
+
     const result = await subscriptionService.getSubscriptionStatus(email);
-    
+
     res.json({
       status: 'success',
       data: result,
@@ -90,16 +109,16 @@ exports.getSubscriptionStatus = async (req, res) => {
 exports.getPaymentHistory = async (req, res) => {
   try {
     const { email } = req.query;
-    
+
     if (!email) {
       return res.status(400).json({
         status: 'error',
         message: 'Email is required',
       });
     }
-    
+
     const result = await subscriptionService.getPaymentHistory(email);
-    
+
     res.json({
       status: 'success',
       data: result,

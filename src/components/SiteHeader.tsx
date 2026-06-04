@@ -12,7 +12,6 @@ const nav = [
   { to: "/contact", label: "Contact" },
 ] as const;
 
-// Matches HeroSlider prices
 const PLAN_PRICES = {
   consultation:    { id: "consultation",  name: "Business Consultation",  price: 50000  },
   "business-plan": { id: "business-plan", name: "Business Plan Writing",   price: 150000 },
@@ -21,6 +20,12 @@ const PLAN_PRICES = {
 };
 
 const API_URL = "http://localhost:3000/api";
+
+const INPUT_CLASS =
+  "w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-brand-red transition-colors";
+
+const SELECT_CLASS =
+  "w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-brand-red transition-colors appearance-none cursor-pointer";
 
 const loadFlutterwaveScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -54,7 +59,6 @@ export function SiteHeader() {
     startDate: new Date().toISOString().split("T")[0],
   });
 
-  // Sync total when service type changes
   useEffect(() => {
     const plan = PLAN_PRICES[bookingDetails.appointmentType as keyof typeof PLAN_PRICES];
     if (plan) {
@@ -66,7 +70,6 @@ export function SiteHeader() {
     }
   }, [bookingDetails.appointmentType]);
 
-  // Recalculate per-installment when count changes
   useEffect(() => {
     setInstallmentPlan((prev) => ({
       ...prev,
@@ -77,7 +80,13 @@ export function SiteHeader() {
   const resetForm = () => {
     setStep("details");
     setBookingDetails({ name: "", email: "", phone: "", appointmentDate: "", appointmentType: "consultation" });
-    setInstallmentPlan({ totalAmount: 50000, numberOfInstallments: 1, amountPerInstallment: 50000, paymentDay: 1, startDate: new Date().toISOString().split("T")[0] });
+    setInstallmentPlan({
+      totalAmount: 50000,
+      numberOfInstallments: 1,
+      amountPerInstallment: 50000,
+      paymentDay: 1,
+      startDate: new Date().toISOString().split("T")[0],
+    });
   };
 
   const handleNextToInstallment = () => {
@@ -102,7 +111,7 @@ export function SiteHeader() {
       const tx_ref = `RPRO-INSTALL-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
       const firstPaymentAmount = installmentPlan.amountPerInstallment;
 
-      const paymentConfig: any = {
+      const paymentConfig = {
         public_key: "FLWPUBK_TEST-96c4b0b3e46e45ba8c9405b5c0f1350c-X",
         tx_ref,
         amount: firstPaymentAmount,
@@ -115,7 +124,7 @@ export function SiteHeader() {
         },
         customizations: {
           title: "R-Pro Business Consult - Pay Small Small",
-          description: `${plan.name} - Installment ${installmentPlan.numberOfInstallments} months`,
+          description: `${plan.name} - ${installmentPlan.numberOfInstallments} months installment`,
           logo: "https://your-logo-url.com/logo.png",
         },
         meta: {
@@ -129,44 +138,53 @@ export function SiteHeader() {
           source: "site_header",
         },
         tokenization: true,
-        callback: async (response: any) => {
-          if (response.status === "successful" && response.card_token) {
-            const subscriptionData = {
-              customerName: bookingDetails.name,
-              customerEmail: bookingDetails.email,
-              customerPhone: bookingDetails.phone,
-              planId: bookingDetails.appointmentType,
-              planName: plan.name,
-              totalAmount: installmentPlan.totalAmount,
-              numberOfInstallments: installmentPlan.numberOfInstallments,
-              amountPerInstallment: installmentPlan.amountPerInstallment,
-              paymentDay: installmentPlan.paymentDay,
-              startDate: installmentPlan.startDate,
-              cardToken: response.card_token,
-              firstPaymentTransactionId: response.transaction_id,
-            };
-
-            const apiResponse = await fetch(`${API_URL}/subscriptions/create-installment`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(subscriptionData),
-            });
-
-            const result = await apiResponse.json();
-
-            if (result.status === "success") {
-              alert(
-                `✓ Installment Plan Activated!\n\nPlan: ${plan.name}\nTotal: ₦${installmentPlan.totalAmount.toLocaleString()}\nInstallments: ${installmentPlan.numberOfInstallments}\nPer Month: ₦${installmentPlan.amountPerInstallment.toLocaleString()}\nPayment Day: Day ${installmentPlan.paymentDay}\n\nFirst payment of ₦${firstPaymentAmount.toLocaleString()} charged.\nRemaining ${installmentPlan.numberOfInstallments - 1} payments auto-charged on day ${installmentPlan.paymentDay} monthly.`
-              );
-              setShowBookingModal(false);
-              resetForm();
-            } else {
-              alert("Payment successful but failed to save installment plan. Please contact support.");
+        callback: (response: any) => {
+          void (async () => {
+            // Block if no card token — transfer payment detected
+            if (!response.card_token) {
+              alert("❌ Installment plans require card payment only.\n\nPlease try again and select 'Card' as your payment method so we can save your card for automatic monthly payments.");
+              setIsProcessing(false);
+              return;
             }
-          } else {
-            alert("Payment was not successful. Please try again.");
-          }
-          setIsProcessing(false);
+
+            if (response.status === "successful" && response.card_token) {
+              const subscriptionData = {
+                customerName: bookingDetails.name,
+                customerEmail: bookingDetails.email,
+                customerPhone: bookingDetails.phone,
+                planId: bookingDetails.appointmentType,
+                planName: plan.name,
+                totalAmount: installmentPlan.totalAmount,
+                numberOfInstallments: installmentPlan.numberOfInstallments,
+                amountPerInstallment: installmentPlan.amountPerInstallment,
+                paymentDay: installmentPlan.paymentDay,
+                startDate: installmentPlan.startDate,
+                cardToken: response.card_token,
+                firstPaymentTransactionId: response.transaction_id,
+              };
+
+              const apiResponse = await fetch(`${API_URL}/subscriptions/create-installment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(subscriptionData),
+              });
+
+              const result = await apiResponse.json();
+
+              if (result.status === "success") {
+                alert(
+                  `✓ Installment Plan Activated!\n\nPlan: ${plan.name}\nTotal Amount: ₦${installmentPlan.totalAmount.toLocaleString()}\nNumber of Installments: ${installmentPlan.numberOfInstallments}\nAmount per Installment: ₦${installmentPlan.amountPerInstallment.toLocaleString()}\nPayment Day: Day ${installmentPlan.paymentDay} of each month\n\nFirst payment of ₦${firstPaymentAmount.toLocaleString()} has been charged.\nRemaining ${installmentPlan.numberOfInstallments - 1} payments will be automatically charged on day ${installmentPlan.paymentDay} of each month.\n\nWe'll send you a receipt each month.`
+                );
+                setShowBookingModal(false);
+                resetForm();
+              } else {
+                alert("Payment successful but failed to save installment plan. Please contact support.");
+              }
+            } else {
+              alert("Payment was not successful. Please try again.");
+            }
+            setIsProcessing(false);
+          })();
         },
         onclose: () => setIsProcessing(false),
       };
@@ -272,7 +290,7 @@ export function SiteHeader() {
         )}
       </motion.header>
 
-      {/* Multi-step Installment Modal — matches HeroSlider */}
+      {/* Installment Payment Modal — mirrors HeroSlider exactly */}
       {showBookingModal && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -284,78 +302,96 @@ export function SiteHeader() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-700">
               <div>
                 <h2 className="text-2xl font-bold text-white">PAY SMALL SMALL</h2>
-                <p className="text-gray-300 text-sm mt-1">Create your custom installment plan</p>
+                <p className="text-gray-400 text-sm mt-1">Create your custom installment plan</p>
               </div>
-              <button onClick={() => { setShowBookingModal(false); resetForm(); }} className="text-gray-400 hover:text-white">
+              <button
+                onClick={() => { setShowBookingModal(false); resetForm(); }}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
                 <X className="size-6" />
               </button>
             </div>
 
             <div className="p-6">
-              {/* Step 1 — Details */}
+              {/* STEP 1 — Details */}
               {step === "details" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Your Details</h3>
                   <input
                     type="text"
                     placeholder="Full Name *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                    className={INPUT_CLASS}
                     value={bookingDetails.name}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, name: e.target.value })}
                   />
                   <input
                     type="email"
                     placeholder="Email Address *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                    className={INPUT_CLASS}
                     value={bookingDetails.email}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, email: e.target.value })}
                   />
                   <input
                     type="tel"
                     placeholder="Phone Number *"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                    className={INPUT_CLASS}
                     value={bookingDetails.phone}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, phone: e.target.value })}
                   />
                   <input
                     type="date"
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-red"
+                    className={INPUT_CLASS}
                     value={bookingDetails.appointmentDate}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentDate: e.target.value })}
                   />
-                  <select
-                    className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-red"
-                    value={bookingDetails.appointmentType}
-                    onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentType: e.target.value })}
-                  >
-                    <option value="consultation">Business Consultation — ₦{PLAN_PRICES.consultation.price.toLocaleString()}</option>
-                    <option value="business-plan">Business Plan Writing — ₦{PLAN_PRICES["business-plan"].price.toLocaleString()}</option>
-                    <option value="registration">Business Registration — ₦{PLAN_PRICES.registration.price.toLocaleString()}</option>
-                    <option value="strategy">Strategic Planning — ₦{PLAN_PRICES.strategy.price.toLocaleString()}</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={SELECT_CLASS}
+                      value={bookingDetails.appointmentType}
+                      onChange={(e) => setBookingDetails({ ...bookingDetails, appointmentType: e.target.value })}
+                    >
+                      <option value="consultation">Business Consultation — ₦{PLAN_PRICES.consultation.price.toLocaleString()}</option>
+                      <option value="business-plan">Business Plan Writing — ₦{PLAN_PRICES["business-plan"].price.toLocaleString()}</option>
+                      <option value="registration">Business Registration — ₦{PLAN_PRICES.registration.price.toLocaleString()}</option>
+                      <option value="strategy">Strategic Planning — ₦{PLAN_PRICES.strategy.price.toLocaleString()}</option>
+                    </select>
+                    {/* custom dropdown arrow */}
+                    <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                      ▾
+                    </div>
+                  </div>
+
+                  {/* Card only notice */}
+                  <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                    <CreditCard className="size-4 text-yellow-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-yellow-300">
+                      Card payment only — your card will be saved for automatic monthly deductions. Bank transfer is not supported for installment plans.
+                    </p>
+                  </div>
+
                   <button
                     onClick={handleNextToInstallment}
-                    className="w-full mt-4 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold"
+                    className="w-full mt-2 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold transition-opacity"
                   >
                     Continue to Installment Plan
                   </button>
                 </div>
               )}
 
-              {/* Step 2 — Installment Plan */}
+              {/* STEP 2 — Installment */}
               {step === "installment" && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white mb-4">Customize Your Installment Plan</h3>
 
                   <div className="bg-brand-red/10 rounded-lg p-4 border border-brand-red/20">
-                    <p className="text-gray-300 text-sm">Total Plan Amount</p>
+                    <p className="text-gray-400 text-sm">Total Plan Amount</p>
                     <p className="text-3xl font-bold text-brand-red">₦{installmentPlan.totalAmount.toLocaleString()}</p>
                   </div>
 
@@ -367,7 +403,7 @@ export function SiteHeader() {
                       max="12"
                       value={installmentPlan.numberOfInstallments}
                       onChange={(e) => setInstallmentPlan({ ...installmentPlan, numberOfInstallments: parseInt(e.target.value) })}
-                      className="w-full"
+                      className="w-full accent-brand-red"
                     />
                     <div className="flex justify-between text-sm text-gray-400 mt-1">
                       <span>1 month</span>
@@ -376,30 +412,35 @@ export function SiteHeader() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <p className="text-gray-300 text-sm">Amount per Installment</p>
+                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <p className="text-gray-400 text-sm">Amount per Installment</p>
                     <p className="text-2xl font-bold text-white">₦{installmentPlan.amountPerInstallment.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400 mt-1">× {installmentPlan.numberOfInstallments} installments</p>
+                    <p className="text-xs text-gray-500 mt-1">× {installmentPlan.numberOfInstallments} installments</p>
                   </div>
 
                   <div>
                     <label className="text-sm text-gray-300 block mb-2">Preferred Payment Day of Month</label>
-                    <select
-                      className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-red"
-                      value={installmentPlan.paymentDay}
-                      onChange={(e) => setInstallmentPlan({ ...installmentPlan, paymentDay: parseInt(e.target.value) })}
-                    >
-                      {[...Array(28)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>Day {i + 1} of each month</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        className={SELECT_CLASS}
+                        value={installmentPlan.paymentDay}
+                        onChange={(e) => setInstallmentPlan({ ...installmentPlan, paymentDay: parseInt(e.target.value) })}
+                      >
+                        {[...Array(28)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>Day {i + 1} of each month</option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+                        ▾
+                      </div>
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-sm text-gray-300 block mb-2">Start Date (First Payment)</label>
                     <input
                       type="date"
-                      className="w-full px-4 py-3 bg-background-dark-100 border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-red"
+                      className={INPUT_CLASS}
                       value={installmentPlan.startDate}
                       onChange={(e) => setInstallmentPlan({ ...installmentPlan, startDate: e.target.value })}
                     />
@@ -407,7 +448,7 @@ export function SiteHeader() {
 
                   <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
                     <p className="text-sm text-blue-300 flex items-center gap-2">
-                      <CreditCard className="size-4" />
+                      <CreditCard className="size-4 shrink-0" />
                       Your card will be saved for automatic monthly payments
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
@@ -420,14 +461,14 @@ export function SiteHeader() {
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={() => setStep("details")}
-                      className="flex-1 px-6 py-3 border border-border rounded-lg hover:bg-white/10 text-white transition"
+                      className="flex-1 px-6 py-3 border border-gray-600 rounded-lg hover:bg-white/10 text-white transition-colors"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleCreateInstallment}
                       disabled={isProcessing}
-                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-6 py-3 bg-brand-red rounded-lg hover:opacity-90 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-opacity"
                     >
                       {isProcessing ? (
                         <><Loader2 className="size-4 animate-spin" /> Processing...</>
@@ -442,6 +483,14 @@ export function SiteHeader() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Fix select option background globally */}
+      <style>{`
+        select option {
+          background-color: #111827;
+          color: #ffffff;
+        }
+      `}</style>
     </>
   );
 }
