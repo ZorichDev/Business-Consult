@@ -60,6 +60,7 @@ export function SiteFooter() {
             <Link to="/about" className="hover:text-white">About Us</Link>
             <Link to="/support" className="hover:text-white">FAQ</Link>
             <Link to="/contact" className="hover:text-white">Contact Us</Link>
+            <Link to="/client-agreement" className="hover:text-white">Client Agreement</Link>
           </div>
         </div>
       </div>

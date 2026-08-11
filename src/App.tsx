@@ -6,6 +6,7 @@ import About from "@/routes/about";
 import Services from "@/routes/services";
 import Support from "@/routes/support";
 import Contact from "@/routes/contact";
+import ClientServiceAgreement from "@/routes/ClientServiceAgreement";
 import NotFound from "@/routes/not-found";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/support" element={<Support />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/client-agreement" element={<ClientServiceAgreement />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

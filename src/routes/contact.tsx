@@ -3,8 +3,44 @@ import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { useState } from "react";
 
+// WhatsApp number in international format, no spaces, no leading 0.
+// +(234) 0903 663 0650  ->  2349036630650
+const WHATSAPP_NUMBER = "2349036630650";
+
 export default function Contact() {
   const [sent, setSent] = useState(false);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const name = data.get("name")?.toString().trim() || "";
+    const email = data.get("email")?.toString().trim() || "";
+    const phone = data.get("phone")?.toString().trim() || "";
+    const company = data.get("company")?.toString().trim() || "";
+    const subject = data.get("subject")?.toString().trim() || "";
+    const message = data.get("message")?.toString().trim() || "";
+
+    const lines = [
+      `*New enquiry from the website*`,
+      `Name: ${name}`,
+      `Email: ${email}`,
+      phone && `Phone: ${phone}`,
+      company && `Company: ${company}`,
+      `Subject: ${subject}`,
+      ``,
+      message,
+    ].filter(Boolean);
+
+    const waMessage = encodeURIComponent(lines.join("\n"));
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`;
+
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    setSent(true);
+    form.reset();
+  }
+
   return (
     <div>
       <section className="relative overflow-hidden bg-gradient-hero text-white">
@@ -33,10 +69,13 @@ export default function Contact() {
 
         <Reveal delay={0.1} className="lg:col-span-3">
           <form
-            onSubmit={(e) => { e.preventDefault(); setSent(true); }}
+            onSubmit={handleSubmit}
             className="rounded-3xl border border-border bg-card p-8 md:p-10 shadow-soft"
           >
             <h3 className="font-display text-2xl font-bold mb-6">Drop Your Message</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Fill this in and it'll open WhatsApp with your message ready to send.
+            </p>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Name *" name="name" required />
               <Field label="Email *" name="email" type="email" required />
@@ -45,11 +84,11 @@ export default function Contact() {
               <Field label="Subject *" name="subject" required className="md:col-span-2" />
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Message *</label>
-                <textarea required rows={5} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow" />
+                <textarea name="message" required rows={5} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow" />
               </div>
             </div>
             <button type="submit" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-elegant hover:scale-105 transition-transform">
-              {sent ? "Message Sent ✓" : <><span>Send Message</span> <Send className="size-4" /></>}
+              {sent ? "Opened WhatsApp ✓" : <><span>Send via WhatsApp</span> <Send className="size-4" /></>}
             </button>
           </form>
         </Reveal>

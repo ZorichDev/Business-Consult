@@ -286,7 +286,7 @@ export function HeroSlider() {
                     </>
                   ) : (
                     <>
-                      Pay Small Small <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+                      { /*Pay Small Small*/ <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" /> }
                     </>
                   )}
                 </button>

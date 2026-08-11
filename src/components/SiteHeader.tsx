@@ -251,7 +251,7 @@ export function SiteHeader() {
               </NavLink>
             ))}
           </nav>
-          <button
+          {/* <button
             onClick={() => setShowBookingModal(true)}
             disabled={isProcessing}
             className="hidden md:inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-elegant hover:scale-105 transition-transform disabled:opacity-50"
@@ -261,7 +261,7 @@ export function SiteHeader() {
             ) : (
               <>PAY SMALL SMALL <ArrowRight className="size-4" /></>
             )}
-          </button>
+          </button> */}
           <button onClick={() => setOpen(!open)} className="md:hidden p-2" aria-label="Menu">
             {open ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
